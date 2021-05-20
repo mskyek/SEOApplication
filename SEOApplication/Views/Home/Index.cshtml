@@ -1,0 +1,100 @@
+﻿@using SEOApplication.Application.SEO
+@model SEOViewModel
+@{
+    ViewBag.Title = "SEO Application";
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <h4>Enter a search term to see how many results include your URL</h4>
+
+        <div class="form-group">
+            <label for="searchTerm">Search Term</label>
+            <input type="text" class="form-control" id="searchTerm" />
+        </div>
+        <div class="form-group">
+            <label for="resultsSearched">Number of results searched</label>
+            <select class="form-control" id="resultNumber">
+                <option>100</option>
+                <option>200</option>
+                <option>300</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="searchEngine">Seclect your preferred search engine</label>
+            <select class="form-control" id="searchEngine">
+                <option>Google</option>
+                <option>Bing</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <div class="form-group">
+                <label for="searchTerm">URL to search for</label>
+                <input type="text" class="form-control" id="searchURL" />
+            </div>
+        </div>
+        <div class="form-group">
+            <div>
+                <input type="submit" data-bind="click: GetSearchResults" id="btnSubmit" class="btn btn-defualt" value="Get Results" />
+            </div>
+        </div>
+        <hr />
+        <div data-bind="with: seoResult" style="display:inline-block">
+            <div class="form-group">
+                <div style="display:inline-block">Position in search results your URL showed up:&nbsp;</div><div style="display:inline-block" data-bind="text: Result"></div>
+            </div>
+            <div class="form-group">
+                <input type="submit" data-bind="click: $parent.ClearResults" id="btnSubmit" class="btn btn-defualt" value="Clear Results" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    var initialResult = [{
+        Result: "0"
+    }];
+    var SEOViewModel = function() {
+        var self = this;
+        self.seoResult = ko.observable(null);
+
+        this.ArrayOfModels = ko.mapping.fromJS([]);
+        this.GetSearchResults = function() {
+            $.ajax({
+                    type: 'POST',
+                    url: "@Url.Action("GetSearchResults", "Home")",
+                    data: JSON.stringify({
+                        'searchTerm': document.querySelector('#searchTerm').value,
+                        'resultNumber': document.querySelector('#resultNumber').value,
+                        'searchEngine': document.querySelector('#searchEngine').value,
+                        'searchURL': document.querySelector('#searchURL').value
+                    }),
+                    dataType: 'json',
+                    contentType: 'application/json; charset=utf-8',
+                    success: function(result) {
+                        ko.mapping.fromJS(result, self.ArrayOfModels)
+                    },
+                    error: function() {
+                        alert("Something went wrong, please try your search again")
+                    }
+                })
+                .done(function (result) {
+                    if (result.ErrorMessages == null) {
+                        self.seoResult(result.Data);
+                    }
+                    else {
+                        alert("Something went wrong, please try your search again")
+                    }
+                })
+        };
+
+        this.ClearResults = function() {
+            $('#searchTerm').val('');
+            $('#searchURL').val('');
+            self.seoResult(undefined);
+        }
+    }
+    ko.applyBindings(new SEOViewModel(initialResult));
+})
+</script>
